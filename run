@@ -6,7 +6,7 @@ cd "$(dirname "$0")"
 export PATH="$HOME/.local/bin:$HOME/.bun/bin:$PATH"
 
 if [ "${1:-}" = "--prod" ]; then
-  (cd frontend && bun run build >/dev/null)
+  (cd frontend && bun --bun run build >/dev/null)
   cd backend && exec uv run uvicorn app.main:app --port "${PORT:-8000}"
 fi
 
@@ -14,4 +14,4 @@ fi
 API_PID=$!
 trap 'kill $API_PID 2>/dev/null' EXIT
 echo "App: http://localhost:5173   API docs: http://localhost:8000/docs"
-cd frontend && bun run dev
+cd frontend && bun --bun run dev
