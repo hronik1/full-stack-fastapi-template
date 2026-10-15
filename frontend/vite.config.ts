@@ -6,6 +6,10 @@ import { defineConfig } from "vite"
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // Dev: proxy API calls to the FastAPI dev server so the app is same-origin.
+  server: {
+    proxy: { "/api": "http://localhost:8000" },
+  },
   build: {
     outDir: "../backend/app/frontend",
     emptyOutDir: true,

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Close the current milestone branch: verify, commit, fast-forward main, branch next.
+# Usage: ./milestone [next-branch]
+set -euo pipefail
+cd "$(dirname "$0")"
+CURRENT="$(git branch --show-current)"
+NEXT="${1:-}"
+[ "$CURRENT" != "main" ] || { echo "already on main — nothing to close"; exit 1; }
+
+./verify --quiet
+git add -A
+git diff --cached --quiet || git commit -q -m "chore: $CURRENT done"
+git checkout -q main
+git merge -q --ff-only "$CURRENT"
+if [ -n "$NEXT" ]; then
+  git checkout -q -b "$NEXT"
+  echo "banked $CURRENT on main · now on $NEXT"
+else
+  echo "banked $CURRENT on main"
+fi

@@ -1,30 +1,31 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, Link } from "@tanstack/react-router"
 
-import useAuth from "@/hooks/useAuth"
+import { Button } from "@/components/ui/button"
 
 export const Route = createFileRoute("/_layout/")({
-  component: Dashboard,
+  component: Home,
   head: () => ({
     meta: [
       {
-        title: "Dashboard - FastAPI Template",
+        title: "Home - App",
       },
     ],
   }),
 })
 
-function Dashboard() {
-  const { user: currentUser } = useAuth()
-
+function Home() {
   return (
-    <div>
+    <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl truncate max-w-sm">
-          Hi, {currentUser?.full_name || currentUser?.email} 👋
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight">App</h1>
         <p className="text-muted-foreground">
-          Welcome back, nice to see you again!!!
+          One-line description of who this is for and what it does.
         </p>
+      </div>
+      <div>
+        <Button asChild>
+          <Link to="/items">Go to Items</Link>
+        </Button>
       </div>
     </div>
   )

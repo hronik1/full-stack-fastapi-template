@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# The only way to commit during a build: runs ./verify first, commits only if GREEN.
+# Usage: ./commit "feat: AC-2 check out equipment"
+set -euo pipefail
+cd "$(dirname "$0")"
+MSG="${1:?usage: ./commit \"<type>: <message>\"}"
+
+./verify --quiet
+git add -A
+git commit -q -m "$MSG"
+echo "committed: $(git log --oneline -1)"

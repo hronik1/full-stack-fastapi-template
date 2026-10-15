@@ -6,3 +6,11 @@ backend/app/frontend/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+.kit/
+*.db
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+frontend/openapi.json
+test-results/

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Dev mode: FastAPI (reload) on :8000 + Vite (HMR) on :5173 proxying /api.
+# `./run --prod` builds the frontend and serves everything from FastAPI on :8000.
+set -euo pipefail
+cd "$(dirname "$0")"
+export PATH="$HOME/.local/bin:$HOME/.bun/bin:$PATH"
+
+if [ "${1:-}" = "--prod" ]; then
+  (cd frontend && bun run build >/dev/null)
+  cd backend && exec uv run uvicorn app.main:app --port "${PORT:-8000}"
+fi
+
+(cd backend && uv run uvicorn app.main:app --reload --port 8000) &
+API_PID=$!
+trap 'kill $API_PID 2>/dev/null' EXIT
+echo "App: http://localhost:5173   API docs: http://localhost:8000/docs"
+cd frontend && bun run dev

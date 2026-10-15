@@ -1,88 +1,44 @@
-# Full Stack FastAPI Template
+# FastAPI + React — interview-lite
 
-[![Test Docker Compose](../../actions/workflows/test-docker-compose.yml/badge.svg)](../../actions/workflows/test-docker-compose.yml)
-[![Test Backend](../../actions/workflows/test-backend.yml/badge.svg)](../../actions/workflows/test-backend.yml)
+A stripped-down fork of [fastapi/full-stack-fastapi-template](https://github.com/fastapi/full-stack-fastapi-template)
+for **timeboxed builds** (take-home / "vibe code this in 2 hours" interviews).
+Same stack, minus everything that slows a 2-hour build.
 
-## Technology Stack and Features
+Based on upstream `master` @ `7257e60` — branch `interview-lite`.
 
-- ⚡ [**FastAPI**](https://fastapi.tiangolo.com) for the Python backend API.
-  - 🧰 [SQLModel](https://sqlmodel.tiangolo.com) for the Python SQL database interactions (ORM).
-  - 🔍 [Pydantic](https://docs.pydantic.dev), used by FastAPI, for the data validation and settings management.
-  - 💾 [PostgreSQL](https://www.postgresql.org) as the SQL database.
-- 🚀 [React](https://react.dev) for the frontend.
-  - 🧩 Built into the backend application and served by FastAPI on the same domain as the API.
-  - 💃 Using TypeScript, hooks, [Vite](https://vitejs.dev), and other parts of a modern frontend stack.
-  - 🎨 [Tailwind CSS](https://tailwindcss.com) and [shadcn/ui](https://ui.shadcn.com) for the frontend components.
-  - 🤖 An automatically generated frontend client.
-  - 🧪 [Playwright](https://playwright.dev) for end-to-end testing.
-  - 🦇 Dark mode support.
-- ☁️ [FastAPI Cloud](https://fastapicloud.com) for deployment.
-- 🐋 [Docker Compose](https://www.docker.com) for local services and self-hosted deployment.
-  - 📞 [Traefik](https://traefik.io) as a reverse proxy with automatic HTTPS.
-- 🔒 Secure password hashing by default.
-- 🔑 JWT (JSON Web Token) authentication.
-- 📫 Email-based password recovery.
-- ✉️ [React Email](https://react.email) for email templates.
-- 📬 [Mailpit](https://mailpit.axllent.org) for local email testing during development.
-- ✅ Tests with [Pytest](https://pytest.org).
-- 🏭 CI (continuous integration) and CD (continuous deployment) based on GitHub Actions.
+## Kept
+- **Backend:** FastAPI, SQLModel, Pydantic settings
+- **Frontend:** React, TypeScript, Vite, Tailwind, shadcn/ui, TanStack Query/Router, dark mode
+- **Generated, typed API client** (regenerated on every `./verify` so it never drifts)
+- **Playwright** e2e
+- An example `Items` CRUD resource (list, add, edit, delete) to copy for the real domain
 
-### Dashboard Login
+## Removed
+Auth/users/JWT, email + Mailpit, Postgres → **SQLite**, Alembic → `create_all` on startup,
+Docker Compose, Traefik, Sentry, CI, react-email package.
 
-![Dashboard login screenshot](img/login.png)
+## Prerequisites
+- [uv](https://docs.astral.sh/uv/): `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- [bun](https://bun.sh): `curl -fsSL https://bun.sh/install | bash`
+- `git`, `curl`
 
-### Dashboard - Admin
+## Scripts
+| | |
+|---|---|
+| `./setup` | install Python + JS deps and Playwright Chromium (~30s cold) |
+| `./run` | dev: FastAPI :8000 (reload) + Vite :5173 (HMR, proxies `/api`) |
+| `./run --prod` | build frontend, serve everything from FastAPI on :8000 |
+| `./verify` | ruff → pytest → regenerate client → biome → build → boot → Playwright. Last line `VERIFY: GREEN` or `VERIFY: RED (stage)`. `--quiet` for one line. |
+| `./commit "msg"` | runs `./verify --quiet`, commits only if GREEN |
+| `./milestone [next-branch]` | verify, commit, fast-forward `main`, start next branch |
 
-![Admin dashboard screenshot](img/dashboard.png)
+## Configuration
+Settings are read from `APP_*` env vars (prefixed so a machine-wide `DATABASE_URL` can't leak in):
+`APP_DATABASE_URL` (default `sqlite:///./app.db`), `APP_PROJECT_NAME`.
 
-### Dashboard - Items
-
-![Items dashboard screenshot](img/dashboard-items.png)
-
-### Dashboard - Dark Mode
-
-![Dark mode dashboard screenshot](img/dashboard-dark.png)
-
-### React Email Templates
-
-![Email templates screenshot](img/react-email.png)
-
-### Mailpit - Local Email Testing
-
-![Mailpit screenshot](img/mailpit.png)
-
-### Interactive API Documentation
-
-![API docs](img/docs.png)
-
-## How to Use It
-
-Click the **Use this template** button at the top of this page to create a new repository.
-
-## Backend Development
-
-Backend docs: [backend/README.md](./backend/README.md).
-
-## Frontend Development
-
-Frontend docs: [frontend/README.md](./frontend/README.md).
-
-## Deployment
-
-FastAPI Cloud deployment: [deployment.md](./deployment.md).
-
-Self-hosted deployment with Docker Compose: [deployment-docker-compose.md](./deployment-docker-compose.md).
-
-## Development
-
-General development docs: [development.md](./development.md).
-
-This includes the local FastAPI and Vite workflow, Docker Compose services, `.env` configuration, and more.
-
-## Release Notes
-
-Check the file [release-notes.md](./release-notes.md).
+## Notes
+- JS tools run on bun's runtime (`--bun`) so native packages match bun's architecture
+  (avoids x64-Node-under-Rosetta vs arm64-package mismatches on Apple Silicon).
 
 ## License
-
-The Full Stack FastAPI Template is licensed under the terms of the MIT license.
+MIT, same as upstream — see LICENSE.

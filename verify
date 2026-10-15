@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Single source of truth for "is the deliverable working right now?"
+# Last line is always "VERIFY: GREEN" or "VERIFY: RED (<stage>)".
+# --quiet: print only that line (plus the failing stage's output on RED).
+set -uo pipefail
+cd "$(dirname "$0")"
+export PATH="$HOME/.local/bin:$HOME/.bun/bin:$PATH"
+
+QUIET=0
+[ "${1:-}" = "--quiet" ] && QUIET=1
+PORT="${VERIFY_PORT:-8765}"
+LOG="$(mktemp)"
+VERIFY_DB="$(mktemp -d)/verify.db"
+PID=""
+trap '[ -n "$PID" ] && kill $PID 2>/dev/null; rm -f "$LOG" "$LOG.boot"' EXIT
+
+red() { echo "VERIFY: RED ($1)"; exit 1; }
+
+stage() {  # stage <name> <command...>
+  local name="$1"; shift
+  [ $QUIET -eq 0 ] && echo "== $name"
+  if "$@" >"$LOG" 2>&1; then
+    [ $QUIET -eq 0 ] && cat "$LOG"
+    return 0
+  fi
+  tail -60 "$LOG"
+  red "$name"
+}
+
+{ [ -d .venv ] && [ -d node_modules ]; } || red "not set up — run ./setup"
+
+# Formatters/safe fixes run first; anything they can't fix fails the stage.
+stage "lint (py)"  bash -c "cd backend && uv run ruff check --fix -q . && uv run ruff format -q ."
+stage "tests (py)" bash -c "cd backend && uv run pytest -q"
+# Regenerate the typed API client from the live OpenAPI schema so it can't drift.
+stage "client"     bash -c "cd backend && uv run python -c 'import app.main, json; print(json.dumps(app.main.app.openapi()))' > ../frontend/openapi.json && cd ../frontend && bun --bun run generate-client"
+stage "lint (ts)"  bash -c "cd frontend && bunx --bun biome check --write --no-errors-on-unmatched --files-ignore-unknown=true ./"
+stage "build"      bash -c "cd frontend && bun --bun run build"
+
+[ $QUIET -eq 0 ] && echo "== boot"
+(cd backend && APP_DATABASE_URL="sqlite:///$VERIFY_DB" exec uv run uvicorn app.main:app --port "$PORT" >"$LOG.boot" 2>&1) &
+PID=$!
+HEALTH="localhost:$PORT/api/v1/utils/health-check/"
+for _ in $(seq 1 100); do curl -sf "$HEALTH" >/dev/null && break; sleep 0.1; done
+curl -sf "$HEALTH" >/dev/null || { cat "$LOG.boot"; red boot; }
+curl -sf "localhost:$PORT/" | grep -q 'id="root"' || { echo "frontend not served at /"; red boot; }
+
+stage "e2e"        bash -c "cd frontend && PLAYWRIGHT_BASE_URL=http://localhost:$PORT bunx --bun playwright test"
+
+mkdir -p .kit && date +%s > .kit/last_green
+echo "VERIFY: GREEN"

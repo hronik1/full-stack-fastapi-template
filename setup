@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# One-time setup: Python deps (uv), JS deps (bun), Playwright Chromium.
+set -euo pipefail
+cd "$(dirname "$0")"
+export PATH="$HOME/.local/bin:$HOME/.bun/bin:$PATH"
+
+for tool in uv bun; do
+  command -v "$tool" >/dev/null || { echo "missing $tool — see README prerequisites"; exit 1; }
+done
+
+(cd backend && uv sync -q)
+bun install --silent
+# Chromium is cached per-machine (~/Library/Caches/ms-playwright); fast after first run.
+(cd frontend && bunx playwright install chromium >/dev/null)
+echo "setup done — run ./verify"
