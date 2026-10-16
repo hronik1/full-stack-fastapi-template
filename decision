@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Record a judgment call with the real clock time.
+# Usage: ./decision "Due dates are stretch — core demo first"
+set -euo pipefail
+cd "$(dirname "$0")"
+TEXT="${1:?usage: ./decision \"<call — why>\"}"
+[ -f DECISIONS.md ] || printf '# Decisions\n\n' > DECISIONS.md
+printf -- '- [%s] %s\n' "$(date +%H:%M)" "$TEXT" >> DECISIONS.md
+echo "decision logged"

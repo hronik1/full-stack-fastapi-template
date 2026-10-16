@@ -7,5 +7,9 @@ MSG="${1:?usage: ./commit \"<type>: <message>\"}"
 
 ./verify --quiet
 git add -A
+if git diff --cached --quiet; then
+  echo "tree already clean; HEAD is $(git rev-parse --short HEAD)"
+  exit 0
+fi
 git commit -q -m "$MSG"
 echo "committed: $(git log --oneline -1)"
